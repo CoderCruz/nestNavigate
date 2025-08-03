@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.sql import func
 from datetime import datetime
-from .database import Base
+from app.database import Base
 
 
 class AppUser(Base):
@@ -11,7 +12,7 @@ class AppUser(Base):
     name = Column(String, nullable = False)
     hashed_password = Column(String, nullable = False)
     coins_earned = Column(Integer, default = 0)
-    created_at = Column(DateTime, default = datetime.utcnow)
+    created_at = Column(DateTime(timezone = True), server_default = func.now())
 
 
 class LearningModule(Base):

@@ -14,7 +14,7 @@ def get_db():
 
 @router.post("/register", response_model = schemas.AppUserOut)
 def register_user(user: schemas.AppUserCreate, db: Session = Depends(get_db)):
-    existing_user = db.query(models.AppUser).filter(models.AppUser.email === user.email).first()
+    existing_user = db.query(models.AppUser).filter(models.AppUser.email == user.email).first()
     if existing_user:
         raise HTTPException(status_code = 400, details = "Email in use, try again")
 
