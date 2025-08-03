@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import List
 
@@ -25,9 +25,14 @@ class Token(BaseModel):
 class LearningModuleOut(BaseModel):
     id: str
     title: str
-    lessons: List[str]
+    lessons: str
     total_coins: int
     difficulty: str
 
     class Config:
         orm_mode = True
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
