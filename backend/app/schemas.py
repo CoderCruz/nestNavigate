@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 
 class AppUserCreate(BaseModel):
@@ -36,3 +36,16 @@ class LearningModuleOut(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class CompleteLessonInput(BaseModel):
+    module_id: str
+    lesson_name: str
+
+class ProgressOut(BaseModel):
+    module_id: str
+    lessons_completed: List[str]
+    completion_percentage: float
+    last_accessed: datetime
+
+    class Config:
+        orm_mode = True

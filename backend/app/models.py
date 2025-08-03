@@ -23,3 +23,13 @@ class LearningModule(Base):
     lessons = Column(String, nullable = False)
     total_coins = Column(Integer, default = 0)
     difficulty = Column(String)
+
+
+class UserProgress(Base):
+    __tablename__ = "progress"
+
+    id = Column(Integer, primary_key = True, index = True)
+    user_id = Column(Integer, nullable = False)
+    module_id = Column(String, nullable = False)
+    lessons_completed = Column(String, default = "")  # comma-separated lessons
+    last_accessed = Column(DateTime(timezone = True), server_default = func.now())
