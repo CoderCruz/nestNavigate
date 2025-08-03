@@ -1,5 +1,3 @@
-import sys
-print("🐍 Python version running this app:", sys.version)
 from fastapi import FastAPI
 from app.database import Base, engine
 from app.routers import users
