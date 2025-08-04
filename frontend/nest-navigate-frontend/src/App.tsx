@@ -18,21 +18,35 @@ export default function App() {
         });
         if (res.status === 200) {
           setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
         }
-      } catch (err: unknown) {
-        setIsLoggedIn(false); 
+      } catch (err) {
+        if (!(axios.isAxiosError(err) && err.response?.status === 401)) {
+          console.error("Auth check failed:", err);
+        }
+        setIsLoggedIn(false);
       } finally {
         setLoadingAuth(false);
       }
     };
 
-    checkAuth();
+    if (document.cookie.includes("access_token")) {
+      checkAuth();
+    } else {
+      setLoadingAuth(false);
+    }
   }, [API_BASE_URL]);
 
-  const handleLoginSuccess = () => {
-    setIsLoggedIn(true);
+  const handleLoginSuccess = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/users/profile`, {
+        withCredentials: true,
+      });
+      if (res.status === 200) {
+        setIsLoggedIn(true);
+      }
+    } catch (err) {
+      console.error("Post-login profile check failed:", err);
+    }
   };
 
   const handleLogout = () => {

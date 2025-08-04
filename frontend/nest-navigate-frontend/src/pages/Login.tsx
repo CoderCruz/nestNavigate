@@ -28,8 +28,8 @@ export default function Login({ onLogin }: LoginProps) {
         );
       }
 
-      const formData = new FormData();
-      formData.append("username", email);
+      const formData = new URLSearchParams();
+      formData.append("username", email); 
       formData.append("password", password);
 
       await axios.post(`${API_BASE_URL}/api/users/login`, formData, {
@@ -47,8 +47,12 @@ export default function Login({ onLogin }: LoginProps) {
         setError("Login failed. Please try again.");
       }
     } catch (err: any) {
-      console.error("Login/Register error:", err);
-      setError("Invalid email or password.");
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
+        setError("Invalid email or password.");
+      } else {
+        console.error("Login/Register error:", err);
+        setError("Something went wrong. Please try again.");
+      }
     }
   };
 
