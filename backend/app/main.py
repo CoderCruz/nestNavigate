@@ -7,10 +7,6 @@ app = FastAPI()
 
 Base.metadata.create_all(bind = engine)
 
-app.include_router(users.router)
-app.include_router(modules.router)
-app.include_router(progress.router)
-
 with database.SessionLocal() as db:
     if db.query(models.LearningModule).count() == 0:
         sample_modules = [
@@ -32,6 +28,10 @@ with database.SessionLocal() as db:
         db.add_all(sample_modules)
         db.commit()
 
+
+app.include_router(users.router)
+app.include_router(modules.router)
+app.include_router(progress.router)
 
 @app.get("/")
 def health_check():

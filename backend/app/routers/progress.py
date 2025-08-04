@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path, Body
 from sqlalchemy.orm import Session
 from app import database, models, schemas, auth
 from datetime import datetime
@@ -41,3 +41,20 @@ def complete_lesson(
 
     db.commit()
     return {"message": "Lesson completed"}
+
+
+@router.post("/coins/award")
+def award_coins(
+    user_id: int = Body(...),
+    coins: int = Body(...),
+    db: Session = Depends(database.get_db),
+    current_user: models.AppUser = Depends(auth.get_current_user)
+):
+    user = db.query(models.AppUser).filter(models.AppUser.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    
+    user.coins_earned += coins
+    db.commit()
+    db.refresh(user)
+    return {"message": f"Awarded {coins} coins to {user.name}", "new_total": user.coins_earned}
