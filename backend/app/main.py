@@ -6,19 +6,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-origins = [
-    "https://nest-navigate-nine.vercel.app",
-    "http://localhost:5173",
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = origins,
-    allow_credentials = True,
-    allow_methods = ["*"],
-    allow_headers = ["*"],
+    allow_origins=[
+        "https://nest-navigate-nine.vercel.app",  
+        "http://localhost:5173", 
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app", 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-Base.metadata.create_all(bind = engine)
+
+Base.metadata.create_all(bind=engine)
 
 with database.SessionLocal() as db:
     if db.query(models.LearningModule).count() == 0:
@@ -41,7 +41,6 @@ with database.SessionLocal() as db:
         db.add_all(sample_modules)
         db.commit()
 
-
 app.include_router(users.router)
 app.include_router(modules.router)
 app.include_router(progress.router)
@@ -49,3 +48,4 @@ app.include_router(progress.router)
 @app.get("/")
 def health_check():
     return {"status": "Backend is running on PORT:8000"}
+

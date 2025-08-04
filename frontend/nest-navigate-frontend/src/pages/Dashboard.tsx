@@ -41,9 +41,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const fetchProfile = async () => {
       try {
         const profileRes = await axios.get(
-          `${API_BASE_URL}/api/users/profile`,
-          { withCredentials: true }
-        );
+          `${API_BASE_URL}/api/users/profile`, {
+          withCredentials: true,
+          timeout: 5000, // 5 seconds max
+        });
 
         if ((profileRes.data as any)?.isLoggedIn === false) {
           onLogout();
