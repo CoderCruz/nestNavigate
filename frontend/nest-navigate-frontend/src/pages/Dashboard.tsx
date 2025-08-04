@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -12,12 +11,14 @@ interface User {
 interface Module {
   id: string;
   title: string;
+  lessons: string;
   total_coins: number;
   difficulty: string;
 }
 
 interface Progress {
   module_id: string;
+  lessons_completed: string[];
   completion_percentage: number;
   last_accessed: string;
 }
@@ -31,6 +32,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [modules, setModules] = useState<Module[]>([]);
   const [progress, setProgress] = useState<Progress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingLesson, setLoadingLesson] = useState<string | null>(null);
 
   const token = localStorage.getItem("token");
 
@@ -73,6 +75,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const completeLesson = async (moduleId: string, lessonName: string) => {
     try {
+      setLoadingLesson(`${moduleId}-${lessonName}`);
       const res = await axios.post(
         "http://localhost:8000/api/progress/complete-lesson",
         { module_id: moduleId, lesson_name: lessonName },
@@ -84,6 +87,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       setProgress(res.data.progress);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoadingLesson(null);
     }
   };
 
@@ -99,6 +104,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const modProgress = progress.find((p) => p.module_id === moduleId);
     return modProgress ? modProgress.lessons_completed : [];
   };
+
+  const activityFeed = progress
+    .flatMap((p) =>
+      p.lessons_completed.map((lesson) => ({
+        lesson,
+        moduleTitle: modules.find((m) => m.id === p.module_id)?.title || "Unknown Module",
+        last_accessed: p.last_accessed,
+      }))
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime()
+    );
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -120,7 +138,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       </div>
 
       <h2 className="text-xl font-bold mb-4">Learning Modules</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {modules.map((module) => {
           const completion = getCompletion(module.id);
           const completedLessons = getCompletedLessons(module.id);
@@ -144,19 +162,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
               <div className="mt-4">
                 {module.lessons.split(",").map((lesson) => {
-                  const isCompleted = completedLessons.includes(lesson.trim());
+                  const trimmedLesson = lesson.trim();
+                  const isCompleted = completedLessons.includes(trimmedLesson);
+                  const isLoading = loadingLesson === `${module.id}-${trimmedLesson}`;
+
                   return (
                     <button
-                      key={lesson}
-                      onClick={() => completeLesson(module.id, lesson.trim())}
-                      disabled={isCompleted}
+                      key={trimmedLesson}
+                      onClick={() => completeLesson(module.id, trimmedLesson)}
+                      disabled={isCompleted || isLoading}
                       className={`mt-2 px-3 py-1 rounded text-sm block w-full ${
                         isCompleted
                           ? "bg-gray-500 cursor-not-allowed"
+                          : isLoading
+                          ? "bg-yellow-500 cursor-wait"
                           : "bg-green-600 hover:bg-green-700"
                       }`}
                     >
-                      {isCompleted ? `${lesson} Completed` : `Complete ${lesson}`}
+                      {isCompleted
+                        ? `${trimmedLesson} Completed`
+                        : isLoading
+                        ? "Loading..."
+                        : `Complete ${trimmedLesson}`}
                     </button>
                   );
                 })}
@@ -164,6 +191,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           );
         })}
+      </div>
+
+      <h2 className="text-xl font-bold mb-4">Recent Activity</h2>
+      <div className="bg-gray-800 p-4 rounded shadow-lg">
+        {activityFeed.length === 0 ? (
+          <p className="text-gray-400">No recent activity yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {activityFeed.map((a, index) => (
+              <li key={index} className="border-b border-gray-700 pb-2">
+                <span className="font-semibold">{a.lesson}</span> in{" "}
+                <span className="text-blue-400">{a.moduleTitle}</span>
+                <span className="text-gray-500 text-sm block">
+                  {new Date(a.last_accessed).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
