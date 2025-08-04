@@ -9,6 +9,7 @@ app = FastAPI()
 #TODO: add vercel front end deployment when done, for CORS
 origins = [
     "http://localhost:5173", 
+    "https://nest-navigate-nine.vercel.app"
 ]
 
 app.add_middleware(
