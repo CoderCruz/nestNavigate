@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
 from datetime import datetime
 from app.database import Base
 
@@ -25,11 +27,15 @@ class LearningModule(Base):
     difficulty = Column(String)
 
 
-class UserProgress(Base):
+class Progress(Base):
     __tablename__ = "progress"
 
-    id = Column(Integer, primary_key = True, index = True)
-    user_id = Column(Integer, nullable = False)
-    module_id = Column(String, nullable = False)
-    lessons_completed = Column(String, default = "")  # comma-separated lessons
-    last_accessed = Column(DateTime(timezone = True), server_default = func.now())
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    module_id = Column(String, ForeignKey("modules.id"))
+    lessons_completed = Column(JSON)
+    completion_percentage = Column(Integer)
+    last_accessed = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("AppUser")
+    module = relationship("LearningModule")
