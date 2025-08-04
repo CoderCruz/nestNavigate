@@ -13,21 +13,25 @@ def get_db():
         db.close()
 
 
+
 @router.post("/complete-lesson")
 def complete_lesson(
     data: schemas.CompleteLessonInput,
     db: Session = Depends(get_db),
     current_user: models.AppUser = Depends(auth.get_current_user)
 ):
+    if current_user is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     progress = (
         db.query(models.UserProgress)
-        .filter_by(user_id = current_user.id, module_id = data.module_id)
+        .filter_by(user_id=current_user.id, module_id=data.module_id)
         .first()
     )
 
     module = db.query(models.LearningModule).filter(models.LearningModule.id == data.module_id).first()
     if not module:
-        raise HTTPException(status_code = 404, detail = "Module not found")
+        raise HTTPException(status_code=404, detail="Module not found")
 
     if progress:
         completed_lessons = progress.lessons_completed.split(",") if progress.lessons_completed else []
@@ -71,6 +75,7 @@ def complete_lesson(
 
     return {"user": user_data, "progress": result_progress}
 
+
 @router.post("/coins/award")
 def award_coins(
     user_id: int = Body(...),
@@ -78,11 +83,15 @@ def award_coins(
     db: Session = Depends(database.get_db),
     current_user: models.AppUser = Depends(auth.get_current_user)
 ):
+    if current_user is None:
+        raise HTTPException(status_code = 401, detail = "Not authenticated")
+
     user = db.query(models.AppUser).filter(models.AppUser.id == user_id).first()
     if not user:
         raise HTTPException(status_code = 404, detail = "User not found")
-    
+ 
     user.coins_earned += coins
     db.commit()
     db.refresh(user)
     return {"message": f"Awarded {coins} coins to {user.name}", "new_total": user.coins_earned}
+

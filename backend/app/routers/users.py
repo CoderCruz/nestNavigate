@@ -64,15 +64,16 @@ def logout_user():
     return response
 
 
+
 @router.get("/profile")
-def get_profile(request: Request, db: Session = Depends(get_db)) -> Union[AppUserOut, dict]:
-    try:
-        current_user = get_current_user(request, db)
-        return current_user
-    except HTTPException as e:
-        if e.status_code == 401:
-            return JSONResponse(content={"isLoggedIn": False}, status_code=200)
-        raise
+def get_profile(
+    request: Request,
+    db: Session = Depends(get_db)
+) -> Union[AppUserOut, dict]:
+    current_user = get_current_user(request, db)
+    if current_user is None:
+        return JSONResponse(content={"isLoggedIn": False}, status_code=200)
+    return current_user
 
 @router.get("/progress/{user_id}")
 def get_user_progress(
