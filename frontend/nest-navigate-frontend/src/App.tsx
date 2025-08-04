@@ -15,7 +15,7 @@ useEffect(() => {
     try {
       await axios.get(`${API_BASE_URL}/api/users/profile`, { withCredentials: true });
       setIsLoggedIn(true);
-    } catch (err) {
+    } catch (err: any) {
       if (err.response?.status !== 401) {
         console.error("Auth check failed:", err);
       }
