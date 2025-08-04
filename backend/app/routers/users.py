@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path, Request
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from app import models, schemas, database, auth
 from app.auth import get_current_user
 from app.schemas import AppUserOut
+from typing import Union
 
 router = APIRouter(prefix = "/api/users", tags = ["Users"])
 
@@ -63,10 +64,15 @@ def logout_user():
     return response
 
 
-@router.get("/profile", response_model = AppUserOut)
-def get_profile(current_user: models.AppUser = Depends(get_current_user)):
-    return current_user
-
+@router.get("/profile")
+def get_profile(request: Request, db: Session = Depends(get_db)) -> Union[AppUserOut, dict]:
+    try:
+        current_user = get_current_user(request, db)
+        return current_user
+    except HTTPException as e:
+        if e.status_code == 401:
+            return JSONResponse(content={"isLoggedIn": False}, status_code=200)
+        raise
 
 @router.get("/progress/{user_id}")
 def get_user_progress(

@@ -29,7 +29,7 @@ export default function Login({ onLogin }: LoginProps) {
       }
 
       const formData = new URLSearchParams();
-      formData.append("username", email); 
+      formData.append("username", email);
       formData.append("password", password);
 
       await axios.post(`${API_BASE_URL}/api/users/login`, formData, {
@@ -37,15 +37,8 @@ export default function Login({ onLogin }: LoginProps) {
         withCredentials: true,
       });
 
-      const profileRes = await axios.get(`${API_BASE_URL}/api/users/profile`, {
-        withCredentials: true,
-      });
+      onLogin();
 
-      if (profileRes.status === 200) {
-        onLogin();
-      } else {
-        setError("Login failed. Please try again.");
-      }
     } catch (err: any) {
       if (axios.isAxiosError(err) && err.response?.status === 401) {
         setError("Invalid email or password.");

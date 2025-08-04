@@ -16,24 +16,21 @@ export default function App() {
         const res = await axios.get(`${API_BASE_URL}/api/users/profile`, {
           withCredentials: true,
         });
-        if (res.status === 200) {
+
+        if (res.data?.isLoggedIn === false) {
+          setIsLoggedIn(false);
+        } else {
           setIsLoggedIn(true);
         }
       } catch (err) {
-        if (!(axios.isAxiosError(err) && err.response?.status === 401)) {
-          console.error("Auth check failed:", err);
-        }
+        console.error("Auth check failed:", err);
         setIsLoggedIn(false);
       } finally {
         setLoadingAuth(false);
       }
     };
 
-    if (document.cookie.includes("access_token")) {
-      checkAuth();
-    } else {
-      setLoadingAuth(false);
-    }
+    checkAuth();
   }, [API_BASE_URL]);
 
   const handleLoginSuccess = async () => {
@@ -41,11 +38,14 @@ export default function App() {
       const res = await axios.get(`${API_BASE_URL}/api/users/profile`, {
         withCredentials: true,
       });
-      if (res.status === 200) {
+      if (res.data?.isLoggedIn === false) {
+        setIsLoggedIn(false);
+      } else {
         setIsLoggedIn(true);
       }
     } catch (err) {
       console.error("Post-login profile check failed:", err);
+      setIsLoggedIn(false);
     }
   };
 

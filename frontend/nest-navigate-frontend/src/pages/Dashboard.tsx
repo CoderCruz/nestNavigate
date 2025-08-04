@@ -40,17 +40,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const profileRes = await axios.get<User>(
+        const profileRes = await axios.get(
           `${API_BASE_URL}/api/users/profile`,
           { withCredentials: true }
         );
-        setUser(profileRes.data);
-      } catch (err: unknown) {
-        if (axios.isAxiosError(err) && err.response?.status === 401) {
+
+        if ((profileRes.data as any)?.isLoggedIn === false) {
           onLogout();
-        } else {
-          console.error("Error loading profile:", err);
+          return;
         }
+
+        setUser(profileRes.data as User);
+      } catch (err) {
+        console.error("Error loading profile:", err);
+        onLogout();
+      } finally {
         setLoading(false);
       }
     };
@@ -74,19 +78,32 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           { withCredentials: true }
         );
         setProgress(progressRes.data);
-      } catch (err: unknown) {
-        if (axios.isAxiosError(err) && err.response?.status === 401) {
-          onLogout();
-        } else {
-          console.error("Error loading modules/progress:", err);
-        }
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.error("Error loading modules/progress:", err);
+        onLogout();
       }
     };
 
     fetchData();
   }, [API_BASE_URL, onLogout, user?.id]);
+
+  // Logout handler
+  const handleLogout = async () => {
+    const confirmed = window.confirm("Are you sure you want to log out?");
+    if (!confirmed) return;
+
+    try {
+      await axios.post(
+        `${API_BASE_URL}/api/users/logout`,
+        {},
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      onLogout();
+    }
+  };
 
   const completeLesson = async (moduleId: string, lessonName: string) => {
     try {
@@ -108,32 +125,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await axios.post(
-        `${API_BASE_URL}/api/users/logout`,
-        {},
-        { withCredentials: true }
-      );
-    } catch (err) {
-      console.error("Logout error:", err);
-    } finally {
-      onLogout();
-    }
-  };
+  const getCompletion = (moduleId: string) =>
+    progress.find((p) => p.module_id === moduleId)?.completion_percentage || 0;
 
-  if (loading) return <div className="text-white">Loading...</div>;
-  if (!user) return <div className="text-red-500">Error loading profile</div>;
-
-  const getCompletion = (moduleId: string) => {
-    const modProgress = progress.find((p) => p.module_id === moduleId);
-    return modProgress ? modProgress.completion_percentage : 0;
-  };
-
-  const getCompletedLessons = (moduleId: string) => {
-    const modProgress = progress.find((p) => p.module_id === moduleId);
-    return modProgress ? modProgress.lessons_completed : [];
-  };
+  const getCompletedLessons = (moduleId: string) =>
+    progress.find((p) => p.module_id === moduleId)?.lessons_completed || [];
 
   const activityFeed = progress
     .flatMap((p) =>
@@ -149,6 +145,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         new Date(b.last_accessed).getTime() -
         new Date(a.last_accessed).getTime()
     );
+
+  if (loading) return <div className="text-white">Loading...</div>;
+
+  if (!user || typeof user.name !== "string") {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
