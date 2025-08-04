@@ -8,8 +8,7 @@ app = FastAPI()
 
 origins = [
     "https://nest-navigate-nine.vercel.app",
-    "https://nest-navigate-git-main-joses-projects-3b676439.vercel.app",  # New deploy preview link
-    "http://localhost:5173"
+    "http://localhost:5173",
 ]
 
 app.add_middleware(
