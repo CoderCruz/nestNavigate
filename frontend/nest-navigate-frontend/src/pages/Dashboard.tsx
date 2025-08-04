@@ -45,8 +45,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           { withCredentials: true }
         );
         setUser(profileRes.data);
-      } catch (err: any) {
-        if (err.response?.status === 401) {
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
           onLogout();
         } else {
           console.error("Error loading profile:", err);
@@ -59,10 +59,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [API_BASE_URL, onLogout]);
 
   useEffect(() => {
-    if (!user?.id) return; 
+    if (!user?.id) return;
+
     const fetchData = async () => {
       try {
-        const modulesRes = await axios.get<Module[]>(`${API_BASE_URL}/api/modules`, { withCredentials: true });
+        const modulesRes = await axios.get<Module[]>(
+          `${API_BASE_URL}/api/modules`,
+          { withCredentials: true }
+        );
         setModules(modulesRes.data);
 
         const progressRes = await axios.get<Progress[]>(
@@ -70,8 +74,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           { withCredentials: true }
         );
         setProgress(progressRes.data);
-      } catch (err: any) {
-        if (err.response?.status === 401) {
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err) && err.response?.status === 401) {
           onLogout();
         } else {
           console.error("Error loading modules/progress:", err);
@@ -83,6 +87,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
     fetchData();
   }, [API_BASE_URL, onLogout, user?.id]);
+
   const completeLesson = async (moduleId: string, lessonName: string) => {
     try {
       setLoadingLesson(`${moduleId}-${lessonName}`);
@@ -105,7 +110,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/api/users/logout`, {}, { withCredentials: true });
+      await axios.post(
+        `${API_BASE_URL}/api/users/logout`,
+        {},
+        { withCredentials: true }
+      );
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
@@ -130,11 +139,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     .flatMap((p) =>
       p.lessons_completed.map((lesson) => ({
         lesson,
-        moduleTitle: modules.find((m) => m.id === p.module_id)?.title || "Unknown Module",
+        moduleTitle:
+          modules.find((m) => m.id === p.module_id)?.title || "Unknown Module",
         last_accessed: p.last_accessed,
       }))
     )
-    .sort((a, b) => new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.last_accessed).getTime() -
+        new Date(a.last_accessed).getTime()
+    );
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
@@ -178,13 +192,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div className="mt-4">
                 {module.lessons.split(",").map((lesson) => {
                   const trimmedLesson = lesson.trim();
-                  const isCompleted = completedLessons.includes(trimmedLesson);
-                  const isLoading = loadingLesson === `${module.id}-${trimmedLesson}`;
+                  const isCompleted =
+                    completedLessons.includes(trimmedLesson);
+                  const isLoading =
+                    loadingLesson === `${module.id}-${trimmedLesson}`;
 
                   return (
                     <button
                       key={trimmedLesson}
-                      onClick={() => completeLesson(module.id, trimmedLesson)}
+                      onClick={() =>
+                        completeLesson(module.id, trimmedLesson)
+                      }
                       disabled={isCompleted || isLoading}
                       className={`mt-2 px-3 py-1 rounded text-sm block w-full ${
                         isCompleted

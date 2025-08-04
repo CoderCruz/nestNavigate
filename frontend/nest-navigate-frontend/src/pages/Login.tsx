@@ -1,16 +1,21 @@
 import { useState } from "react";
 import axios from "axios";
 
-export default function Login({ onLogin }) {
+interface LoginProps {
+  onLogin: () => void;
+}
+
+export default function Login({ onLogin }: LoginProps) {
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isRegister, setIsRegister] = useState(false);
+  const [email, setEmail] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [isRegister, setIsRegister] = useState<boolean>(false);
 
   axios.defaults.withCredentials = true;
-  const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -41,7 +46,7 @@ export default function Login({ onLogin }) {
       } else {
         setError("Login failed. Please try again.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Login/Register error:", err);
       setError("Invalid email or password.");
     }
