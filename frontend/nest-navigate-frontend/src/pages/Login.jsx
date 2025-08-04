@@ -2,45 +2,49 @@ import { useState } from "react";
 import axios from "axios";
 
 export default function Login({ onLogin }) {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isRegister, setIsRegister] = useState(false);
 
+  axios.defaults.withCredentials = true;
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
       if (isRegister) {
-        await axios.post("http://localhost:8000/api/users/register", {
-          email,
-          name,
-          password,
-        });
+        await axios.post(
+          `${API_BASE_URL}/api/users/register`,
+          { email, name, password },
+          { withCredentials: true }
+        );
+      }
 
-        await handleLogin();
+      const formData = new FormData();
+      formData.append("username", email);
+      formData.append("password", password);
+
+      await axios.post(`${API_BASE_URL}/api/users/login`, formData, {
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        withCredentials: true,
+      });
+
+      const profileRes = await axios.get(`${API_BASE_URL}/api/users/profile`, {
+        withCredentials: true,
+      });
+
+      if (profileRes.status === 200) {
+        onLogin();
       } else {
-        await handleLogin();
+        setError("Login failed. Please try again.");
       }
     } catch (err) {
-      setError("Something went wrong. Please try again.");
+      console.error("Login/Register error:", err);
+      setError("Invalid email or password.");
     }
-  };
-
-  const handleLogin = async () => {
-    const formData = new FormData();
-    formData.append("username", email);
-    formData.append("password", password);
-
-    const res = await axios.post("http://localhost:8000/api/users/login", formData, {
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    });
-
-    const { access_token } = res.data;
-    localStorage.setItem("token", access_token);
-    onLogin(access_token);
   };
 
   return (

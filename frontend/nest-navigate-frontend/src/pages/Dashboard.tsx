@@ -28,67 +28,88 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onLogout }: DashboardProps) {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [user, setUser] = useState<User | null>(null);
   const [modules, setModules] = useState<Module[]>([]);
   const [progress, setProgress] = useState<Progress[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingLesson, setLoadingLesson] = useState<string | null>(null);
 
-  const token = localStorage.getItem("token");
+  axios.defaults.withCredentials = true;
 
   useEffect(() => {
-    if (!token) {
-      onLogout();
-      return;
-    }
+    const fetchProfile = async () => {
+      try {
+        const profileRes = await axios.get<User>(
+          `${API_BASE_URL}/api/users/profile`,
+          { withCredentials: true }
+        );
+        setUser(profileRes.data);
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          onLogout();
+        } else {
+          console.error("Error loading profile:", err);
+        }
+        setLoading(false);
+      }
+    };
 
+    fetchProfile();
+  }, [API_BASE_URL, onLogout]);
+
+  useEffect(() => {
+    if (!user?.id) return; 
     const fetchData = async () => {
       try {
-        const profileRes = await axios.get<User>("http://localhost:8000/api/users/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const modulesRes = await axios.get<Module[]>("http://localhost:8000/api/modules", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const modulesRes = await axios.get<Module[]>(`${API_BASE_URL}/api/modules`, { withCredentials: true });
+        setModules(modulesRes.data);
 
         const progressRes = await axios.get<Progress[]>(
-          `http://localhost:8000/api/users/progress/${profileRes.data.id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          `${API_BASE_URL}/api/users/progress/${user.id}`,
+          { withCredentials: true }
         );
-
-        setUser(profileRes.data);
-        setModules(modulesRes.data);
         setProgress(progressRes.data);
-      } catch (err) {
-        console.error(err);
-        onLogout();
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          onLogout();
+        } else {
+          console.error("Error loading modules/progress:", err);
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [token, onLogout]);
-
+  }, [API_BASE_URL, onLogout, user?.id]);
   const completeLesson = async (moduleId: string, lessonName: string) => {
     try {
       setLoadingLesson(`${moduleId}-${lessonName}`);
       const res = await axios.post(
-        "http://localhost:8000/api/progress/complete-lesson",
+        `${API_BASE_URL}/api/progress/complete-lesson`,
         { module_id: moduleId, lesson_name: lessonName },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { withCredentials: true }
       );
+
       setUser((prev) =>
         prev ? { ...prev, coins_earned: res.data.user.coins_earned } : prev
       );
       setProgress(res.data.progress);
     } catch (err) {
-      console.error(err);
+      console.error("Error completing lesson:", err);
     } finally {
       setLoadingLesson(null);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/users/logout`, {}, { withCredentials: true });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      onLogout();
     }
   };
 
@@ -113,20 +134,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         last_accessed: p.last_accessed,
       }))
     )
-    .sort(
-      (a, b) =>
-        new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime()
-    );
+    .sort((a, b) => new Date(b.last_accessed).getTime() - new Date(a.last_accessed).getTime());
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Welcome, {user.name}</h1>
         <button
-          onClick={() => {
-            localStorage.removeItem("token");
-            onLogout();
-          }}
+          onClick={handleLogout}
           className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
         >
           Logout

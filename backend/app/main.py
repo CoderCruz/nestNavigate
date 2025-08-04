@@ -8,18 +8,16 @@ app = FastAPI()
 
 #TODO: add vercel front end deployment when done, for CORS
 origins = [
-    "http://localhost:5173",
-    "https://my-frontend.vercel.app"
+    "http://localhost:5173", 
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins = origins,
+    allow_credentials = True,
+    allow_methods = ["*"],
+    allow_headers = ["*"],
 )
-
 Base.metadata.create_all(bind = engine)
 
 with database.SessionLocal() as db:
