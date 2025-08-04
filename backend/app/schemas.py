@@ -49,3 +49,8 @@ class ProgressOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class CoinAwardRequest(BaseModel):
+    user_id: int
+    coins: int
