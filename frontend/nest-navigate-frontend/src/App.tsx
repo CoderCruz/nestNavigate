@@ -9,32 +9,44 @@ export default function App() {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   axios.defaults.withCredentials = true;
-  
-useEffect(() => {
-  const checkAuth = async () => {
-    try {
-      await axios.get(`${API_BASE_URL}/api/users/profile`, { withCredentials: true });
-      setIsLoggedIn(true);
-    } catch (err: any) {
-      if (err.response?.status !== 401) {
-        console.error("Auth check failed:", err);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/users/profile`, {
+          withCredentials: true,
+        });
+        if (res.status === 200) {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (err: unknown) {
+        setIsLoggedIn(false); 
+      } finally {
+        setLoadingAuth(false);
       }
-      setIsLoggedIn(false);
-    } finally {
-      setLoadingAuth(false);
-    }
+    };
+
+    checkAuth();
+  }, [API_BASE_URL]);
+
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
   };
-  checkAuth();
-}, [API_BASE_URL]);
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+  };
 
   if (loadingAuth) {
     return <div className="text-white">Loading...</div>;
   }
 
   return isLoggedIn ? (
-    <Dashboard onLogout={() => setIsLoggedIn(false)} />
+    <Dashboard onLogout={handleLogout} />
   ) : (
-    <Login onLogin={() => setIsLoggedIn(true)} />
+    <Login onLogin={handleLoginSuccess} />
   );
 }
 
