@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-#TODO: add vercel front end deployment when done, for CORS
 origins = [
     "https://nest-navigate-nine.vercel.app",
     "https://nest-navigate-git-main-joses-projects-3b676439.vercel.app",  # New deploy preview link
