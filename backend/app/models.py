@@ -27,14 +27,13 @@ class LearningModule(Base):
     difficulty = Column(String)
 
 
-class Progress(Base):
+class UserProgress(Base):
     __tablename__ = "progress"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    module_id = Column(String, ForeignKey("modules.id"))
-    lessons_completed = Column(JSON)
-    completion_percentage = Column(Integer)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    module_id = Column(String, ForeignKey("modules.id"), nullable=False)
+    lessons_completed = Column(String, default="")  # comma-separated lessons
     last_accessed = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("AppUser")

@@ -3,38 +3,55 @@ import axios from "axios";
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("username", email); // FastAPI expects username in OAuth2 form
-      formData.append("password", password);
+      if (isRegister) {
+        await axios.post("http://localhost:8000/api/users/register", {
+          email,
+          name,
+          password,
+        });
 
-      const res = await axios.post("http://localhost:8000/api/users/login", formData, {
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      });
-
-      const { access_token } = res.data;
-      localStorage.setItem("token", access_token);
-
-      if (onLogin) onLogin(access_token);
+        await handleLogin();
+      } else {
+        await handleLogin();
+      }
     } catch (err) {
-      setError("Invalid email or password");
+      setError("Something went wrong. Please try again.");
     }
+  };
+
+  const handleLogin = async () => {
+    const formData = new FormData();
+    formData.append("username", email);
+    formData.append("password", password);
+
+    const res = await axios.post("http://localhost:8000/api/users/login", formData, {
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    });
+
+    const { access_token } = res.data;
+    localStorage.setItem("token", access_token);
+    onLogin(access_token);
   };
 
   return (
     <div className="flex items-center justify-center h-screen bg-gray-900">
       <form
-        onSubmit={handleLogin}
+        onSubmit={handleSubmit}
         className="bg-gray-800 p-6 rounded-lg shadow-lg w-96"
       >
-        <h2 className="text-2xl font-bold text-white mb-4">Login</h2>
+        <h2 className="text-2xl font-bold text-white mb-4">
+          {isRegister ? "Register" : "Login"}
+        </h2>
 
         {error && <p className="text-red-500 mb-3">{error}</p>}
 
@@ -44,21 +61,48 @@ export default function Login({ onLogin }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="w-full p-2 mb-3 rounded bg-gray-700 text-white"
+          required
         />
+
+        {isRegister && (
+          <input
+            type="text"
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full p-2 mb-3 rounded bg-gray-700 text-white"
+            required
+          />
+        )}
+
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="w-full p-2 mb-3 rounded bg-gray-700 text-white"
+          required
         />
+
         <button
           type="submit"
           className="w-full bg-blue-600 hover:bg-blue-700 p-2 rounded text-white font-bold"
         >
-          Login
+          {isRegister ? "Register" : "Login"}
         </button>
+
+        <p className="text-gray-400 mt-3 text-sm">
+          {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => setIsRegister(!isRegister)}
+            className="text-blue-400 hover:underline"
+          >
+            {isRegister ? "Login" : "Register"}
+          </button>
+        </p>
       </form>
     </div>
   );
 }
+
