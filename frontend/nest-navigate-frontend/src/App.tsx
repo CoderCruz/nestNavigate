@@ -11,12 +11,24 @@ export default function App() {
   axios.defaults.withCredentials = true;
 
   useEffect(() => {
+    const pingBackend = () => {
+      axios
+        .get(`${API_BASE_URL}/`, { timeout: 3000 })
+        .then(() => console.log("Keep-alive ping successful"))
+        .catch(() => console.log("Keep-alive ping failed"));
+    };
+    pingBackend();
+    const interval = setInterval(pingBackend, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
     const checkAuth = async () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/api/users/profile`, {
           withCredentials: true,
+          timeout: 5000,
         });
-
         if (res.data?.isLoggedIn === false) {
           setIsLoggedIn(false);
         } else {
@@ -29,24 +41,11 @@ export default function App() {
         setLoadingAuth(false);
       }
     };
-
     checkAuth();
   }, [API_BASE_URL]);
 
-  const handleLoginSuccess = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/users/profile`, {
-        withCredentials: true,
-      });
-      if (res.data?.isLoggedIn === false) {
-        setIsLoggedIn(false);
-      } else {
-        setIsLoggedIn(true);
-      }
-    } catch (err) {
-      console.error("Post-login profile check failed:", err);
-      setIsLoggedIn(false);
-    }
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
   };
 
   const handleLogout = () => {
@@ -54,7 +53,14 @@ export default function App() {
   };
 
   if (loadingAuth) {
-    return <div className="text-white">Loading...</div>;
+    return (
+      <>
+        <div className="text-gray-400 text-center mt-4">
+          Checking your session...
+        </div>
+        <Login onLogin={handleLoginSuccess} />
+      </>
+    );
   }
 
   return isLoggedIn ? (
