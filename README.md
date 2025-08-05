@@ -48,7 +48,6 @@ VITE_API_BASE_URL=https://nestnavigate.onrender.com
 ## Setup Instructions
 
 ### Backend
-```bash
 # Clone repository
 git clone https://github.com/CoderCruz/nestNavigate
 cd backend
@@ -73,7 +72,7 @@ npm install
 npm run dev
 
 Time Spent
-Total Time: ~15 hours over 3 days
+Total Time: ~28 hours over 3 days
 Backend Setup & API Development: ~5 hours
 Setting up FastAPI, database models, authentication routes, and progress tracking.
 Frontend Development & Integration: ~6 hours
